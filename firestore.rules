@@ -1,0 +1,151 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Deny Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'arshadraza20055@gmail.com' && request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isSupervisor() {
+      return isAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['supervisor', 'admin']
+      );
+    }
+
+    // Diagnostics / Connection verification
+    match /test/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Validation: User Profile
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 120 &&
+             data.role in ['farmer', 'supervisor', 'admin'] &&
+             data.preferredLanguage in ['hi', 'en', 'cg'] &&
+             data.district is string && data.district.size() <= 100 &&
+             data.state is string && data.state.size() <= 100;
+    }
+
+    // User Public Profile
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+
+      // Users can create their own profile (regular users default to 'farmer' or 'supervisor' with admin override)
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == request.auth.uid &&
+                       (incoming().role == 'farmer' || isAdmin());
+
+      allow update: if isOwner(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       (
+                         // Farmer updating preferences
+                         (incoming().role == existing().role &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'preferredLanguage', 'district', 'state', 'updatedAt'])) ||
+                         // Admin updating role or settings
+                         isAdmin()
+                       );
+
+      allow delete: if isAdmin();
+
+      // Isolated PII Data
+      match /private/info {
+        allow get: if isOwner(userId) || isAdmin();
+        allow list: if isOwner(userId) || isAdmin();
+        allow create, update: if isOwner(userId) &&
+                                 incoming().userId == request.auth.uid &&
+                                 incoming().phone is string && incoming().phone.size() <= 20;
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      // Farmer's Saved Best Mandi Calculations
+      match /savedRecommendations/{recommendationId} {
+        allow get: if isOwner(userId) || isAdmin();
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(recommendationId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().cropName is string && incoming().cropName.size() <= 100 &&
+                         incoming().winnerMandiName is string && incoming().winnerMandiName.size() <= 120 &&
+                         incoming().expectedNetProfit is number &&
+                         incoming().netReturnPerQuintal is number;
+        allow update: if isOwner(userId) &&
+                         incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // Mandi Price Records (AGMARKNET)
+    match /mandiPriceRecords/{recordId} {
+      allow get: if true;
+      allow list: if true;
+
+      allow create: if isSupervisor() &&
+                       isValidId(recordId) &&
+                       incoming().commodity is string && incoming().commodity.size() <= 80 &&
+                       incoming().mandiName is string && incoming().mandiName.size() <= 100 &&
+                       incoming().modalPrice is number && incoming().modalPrice >= 0;
+
+      allow update: if isSupervisor() &&
+                       incoming().commodity is string &&
+                       incoming().modalPrice is number && incoming().modalPrice >= 0;
+
+      allow delete: if isAdmin();
+    }
+
+    // Farmer Price Alert Subscriptions
+    match /alerts/{alertId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(alertId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().phone is string && incoming().phone.size() <= 20 &&
+                       incoming().crop is string && incoming().crop.size() <= 80 &&
+                       incoming().mandiName is string && incoming().mandiName.size() <= 100;
+
+      allow update: if isSignedIn() &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId;
+
+      allow delete: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+    }
+  }
+}

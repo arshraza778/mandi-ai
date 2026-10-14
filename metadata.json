@@ -1,0 +1,6 @@
+{
+  "name": "MandiMind AI",
+  "description": "AI-driven agricultural price intelligence, AGMARKNET mandi rates, route optimization, and crop advisories for Indian farmers and FPOs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

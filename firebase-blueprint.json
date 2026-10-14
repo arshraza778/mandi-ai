@@ -1,0 +1,282 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public profile details and role preferences for MandiMind AI farmers, supervisors, and admins.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth user ID matching request.auth.uid",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Farmer or official full name",
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "description": "User role access level",
+          "enum": ["farmer", "supervisor", "admin"]
+        },
+        "preferredLanguage": {
+          "type": "string",
+          "description": "Preferred interface language",
+          "enum": ["hi", "en", "cg"]
+        },
+        "district": {
+          "type": "string",
+          "description": "Primary agricultural district",
+          "maxLength": 100
+        },
+        "state": {
+          "type": "string",
+          "description": "Indian state",
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when profile was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when profile was last modified"
+        }
+      },
+      "required": ["userId", "displayName", "role", "preferredLanguage", "district", "state"]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated Personally Identifiable Information (PII) belonging strictly to the authenticated user.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owning user UID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Contact mobile number",
+          "maxLength": 20
+        },
+        "village": {
+          "type": "string",
+          "description": "Farmer home village name",
+          "maxLength": 100
+        },
+        "landAreaAcres": {
+          "type": "number",
+          "description": "Agricultural land holding in acres"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of update"
+        }
+      },
+      "required": ["userId", "phone"]
+    },
+    "SavedRecommendation": {
+      "title": "SavedRecommendation",
+      "description": "Farmer saved mandi calculations and profit forecasts.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique calculation receipt identifier",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the farmer who calculated this recommendation",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "cropId": {
+          "type": "string",
+          "description": "Crop commodity identifier",
+          "maxLength": 50
+        },
+        "cropName": {
+          "type": "string",
+          "description": "Crop title in Hindi/English",
+          "maxLength": 100
+        },
+        "quantityQuintal": {
+          "type": "number",
+          "description": "Produce quantity in quintals"
+        },
+        "winnerMandiName": {
+          "type": "string",
+          "description": "Recommended best mandi name",
+          "maxLength": 120
+        },
+        "expectedNetProfit": {
+          "type": "number",
+          "description": "Calculated total net profit in INR"
+        },
+        "netReturnPerQuintal": {
+          "type": "number",
+          "description": "Net return rate per quintal in INR"
+        },
+        "calculatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of calculation"
+        }
+      },
+      "required": ["id", "userId", "cropId", "cropName", "quantityQuintal", "winnerMandiName", "expectedNetProfit", "netReturnPerQuintal"]
+    },
+    "MandiPriceRecord": {
+      "title": "MandiPriceRecord",
+      "description": "Live AGMARKNET commodity rate records curated by mandi supervisors or synced from official sources.",
+      "type": "object",
+      "properties": {
+        "commodity": {
+          "type": "string",
+          "description": "Commodity English name",
+          "maxLength": 80
+        },
+        "commodityHindi": {
+          "type": "string",
+          "description": "Commodity Hindi name",
+          "maxLength": 80
+        },
+        "variety": {
+          "type": "string",
+          "description": "Crop variety / trade quality",
+          "maxLength": 80
+        },
+        "category": {
+          "type": "string",
+          "description": "Commodity sector category",
+          "enum": ["vegetable", "cereal", "pulse", "oilseed", "other"]
+        },
+        "minPrice": {
+          "type": "number",
+          "description": "Minimum auction price in INR/quintal"
+        },
+        "maxPrice": {
+          "type": "number",
+          "description": "Maximum auction price in INR/quintal"
+        },
+        "modalPrice": {
+          "type": "number",
+          "description": "Modal/average auction price in INR/quintal"
+        },
+        "priceChange": {
+          "type": "number",
+          "description": "Price variation compared to yesterday"
+        },
+        "arrivalsQuintal": {
+          "type": "number",
+          "description": "Daily arrival quantity in quintals"
+        },
+        "mandiName": {
+          "type": "string",
+          "description": "Mandi yard English name",
+          "maxLength": 100
+        },
+        "mandiNameHindi": {
+          "type": "string",
+          "description": "Mandi yard Hindi name",
+          "maxLength": 100
+        },
+        "district": {
+          "type": "string",
+          "description": "APMC market district",
+          "maxLength": 100
+        },
+        "state": {
+          "type": "string",
+          "description": "State of the market yard",
+          "maxLength": 100
+        },
+        "dataSource": {
+          "type": "string",
+          "description": "Attribution data source",
+          "maxLength": 80
+        },
+        "isLive": {
+          "type": "boolean",
+          "description": "True if actively reported today"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "Date and time of update",
+          "maxLength": 60
+        }
+      },
+      "required": ["commodity", "commodityHindi", "variety", "category", "minPrice", "maxPrice", "modalPrice", "arrivalsQuintal", "mandiName", "district", "state"]
+    },
+    "PriceAlertSubscription": {
+      "title": "PriceAlertSubscription",
+      "description": "Daily SMS and WhatsApp price notifications subscribed by farmers.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique subscription ID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Subscriber user ID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Subscriber contact number",
+          "maxLength": 20
+        },
+        "crop": {
+          "type": "string",
+          "description": "Crop for notifications",
+          "maxLength": 80
+        },
+        "mandiName": {
+          "type": "string",
+          "description": "Target mandi yard",
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Subscription timestamp"
+        }
+      },
+      "required": ["id", "userId", "phone", "crop", "mandiName"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "#/entities/UserProfile",
+      "description": "Public user profile and assigned role"
+    },
+    "/users/{userId}/private/info": {
+      "schema": "#/entities/UserPrivateInfo",
+      "description": "Protected user contact and farm details"
+    },
+    "/users/{userId}/savedRecommendations/{recommendationId}": {
+      "schema": "#/entities/SavedRecommendation",
+      "description": "Saved profit calculations for a farmer"
+    },
+    "/mandiPriceRecords/{recordId}": {
+      "schema": "#/entities/MandiPriceRecord",
+      "description": "Live AGMARKNET price cards for crops and mandis"
+    },
+    "/alerts/{alertId}": {
+      "schema": "#/entities/PriceAlertSubscription",
+      "description": "Daily notification subscriptions"
+    }
+  }
+}
